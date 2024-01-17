@@ -411,7 +411,7 @@ function deleteLocation(id) {
 function createLocation() {
     var provin = parseInt($(`#provin_location`).val());
     var distric = parseInt($(`#district_location`).val());
-    var ward = parseInt($(`#ward_location`).val());
+    var ward = $(`#ward_location`).val();
     var addss = $(`#customer_address_location`).val();
     var obj = {
         PotentialCustomerID: GetUserId(),
@@ -518,8 +518,6 @@ function GetUserEmail() {
     return email;
 }
 
-
-
 function openmodalorder(id) {
     $.ajax({
         url: "/Customer/GetOrderDetailCustomer",
@@ -550,27 +548,36 @@ function openmodalorder(id) {
                                                     </p>
                                                 </div>
                                                 <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
-                                                    <p class="text-muted mb-0 small"> ${item.Price}</p>
+                                                    <p class="text-muted mb-0 small">Giá: ${formatCurrency.format(item.Price)}</p>
                                                 </div>
                                                 <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
                                                     <p class="text-muted mb-0 small">Số lượng: ${item.Quantity}</p>
                                                 </div>
                                                 <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
-                                                    <p class="text-muted mb-0 small">${formatCurrency.format(item.TotalMoney)}</p>
+                                                    <p class="text-muted mb-0 small">Tổng: ${formatCurrency.format(item.TotalMoney)}</p>
                                                 </div>
                                             </div>
-                                            <hr class="mb-4" style="background-color: #e0e0e0; opacity: 1;">
+                                            <hr class="mb-4" style="background-color: #ff6565; opacity: 1;">
                                         </div>
+                                       
                                     </div>`;
             });
             $("#product_order_detail").html(html);
             $("#total_money_order_order_detail").text(formatCurrency.format(order.TotalMoney))
             $("#discount_price_order_customer").text(formatCurrency.format(order.Discount));
             $("#order_date_order_customer").text(getFormattedDateDMY(order.OrderDate));
-            $("#ship_price_order_customer").text(getFormattedDateDMY(order.ShipPrice));
+            $("#ship_price_order_customer").text(formatCurrency.format(order.ShipPrice));
             $("#payment_date_order_detail_customer").text(getFormattedDateDMY(order.PaymentDate));
             $("#total_amount_order_customer").text(formatCurrency.format(order.TotalMoney));
             $('#modal-oder-details').modal('show');
+            $('#order-id-inp').val(order.OrderID);
+            if (order.TransactStatusID == 5 || order.TransactStatusID == 4 || order.TransactStatusID == 2 || order.TransactStatusID == 3) {
+                console.log($('#btn-order-handle'))
+                $('#btn-order-handle').prop("hidden", true);
+            }
+            else {
+                $('#btn-order-handle').prop("hidden", false);
+            }
         },
         error: function (err) {
             console.log(err)
@@ -578,10 +585,98 @@ function openmodalorder(id) {
     })
 }
 
+//function openmodalorder(id) {
+//    $.ajax({
+//        url: "/Customer/GetOrderDetailCustomer",
+//        type: 'GET',
+//        dataType: 'json',
+//        //contentType: 'application/json;charset=utf-8',
+//        data: { orderID: id },
+//        success: function (result) {
+//            var order = arrOrder.find(p => p.OrderID == id);
+//            console.log(order)
+//            $("#customer_name_order_detail").text(GetUserName());
+//            $("#order_code_order_detail").text(order.OrderCode);
+//            var html = '';
+//            $.each(result, (key, item) => {
+//                html += ` <div class="card shadow-0 border mb-4">
+//                                        <div class="card-body">
+//                                            <div class="row">
+//                                                <div class="col-md-2">
+//                                                    <img src="/images/${item.Image}"
+//                                                         class="img-fluid" alt="Phone">
+//                                                </div>
+//                                                <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+//                                                    <p class="text-muted mb-0">${item.ProductName}</p>
+//                                                </div>
+//                                                <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+//                                                    <p class="text-muted mb-0 small">
+//                                                        ${item.CombinedOptionValues}
+//                                                    </p>
+//                                                </div>
+//                                                <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+//                                                    <p class="text-muted mb-0 small"> ${item.Price}</p>
+//                                                </div>
+//                                                <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+//                                                    <p class="text-muted mb-0 small">Số lượng: ${item.Quantity}</p>
+//                                                </div>
+//                                                <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+//                                                    <p class="text-muted mb-0 small">${formatCurrency.format(item.TotalMoney)}</p>
+//                                                </div>
+//                                            </div>
+//                                            <hr class="mb-4" style="background-color: #e0e0e0; opacity: 1;">
+//                                        </div>
+//                                    </div>`;
+//            });
+//            $("#product_order_detail").html(html);
+//            $("#total_money_order_order_detail").text(formatCurrency.format(order.TotalMoney))
+//            $("#discount_price_order_customer").text(formatCurrency.format(order.Discount));
+//            $("#order_date_order_customer").text(getFormattedDateDMY(order.OrderDate));
+//            $("#ship_price_order_customer").text(getFormattedDateDMY(order.ShipPrice));
+//            $("#payment_date_order_detail_customer").text(getFormattedDateDMY(order.PaymentDate));
+//            $("#total_amount_order_customer").text(formatCurrency.format(order.TotalMoney));
+//            $('#modal-oder-details').modal('show');
+//        },
+//        error: function (err) {
+//            console.log(err)
+//        }
+//    })
+//}
+
 function closeTab() {
     $("#locationContainer div").remove();
 
 }
+
+//function GetOrder() {
+//    $.ajax({
+//        url: "/Customer/GetOrderCustomer",
+//        type: 'GET',
+//        dataType: 'json',
+//        //contentType: 'application/json;charset=utf-8',
+//        data: { customerID: GetUserId() },
+//        success: function (result) {
+//            arrOrder = result;
+//            var html = "";
+//            $.each(result, (key, item) => {
+
+//                html += `<tr>
+//                            <td>${item.OrderCode}</td>
+//                            <td>${getFormattedDateDMY(item.OrderDate)}</td>
+//                            <td>${getFormattedDateDMY(item.ShipDate)}</td>
+//                            <td>${item.StatusName}</td>
+//                            <td>${item.TotalMoney}</td>
+//                            <td><a onclick="openmodalorder(${item.OrderID})" class="check-btn sqr-btn ">Xem chi tiết</a>
+//                            </td>
+//                        </tr>`
+//            });
+//            $("#tbody_order_customer").html(html);
+//        },
+//        error: function (err) {
+//            console.log(err)
+//        }
+//    })
+//}
 
 function GetOrder() {
     $.ajax({
@@ -597,10 +692,10 @@ function GetOrder() {
 
                 html += `<tr>
                             <td>${item.OrderCode}</td>
-                            <td>${getFormattedDateDMY(item.OrderDate)}</td>
+                            <td>${getFormattedDateDMY(item.OrderDate)}</td> 
                             <td>${getFormattedDateDMY(item.ShipDate)}</td>
                             <td>${item.StatusName}</td>
-                            <td>${item.TotalMoney}</td>
+                            <td>${formatCurrency.format(item.TotalMoney)}</td>
                             <td><a onclick="openmodalorder(${item.OrderID})" class="check-btn sqr-btn ">Xem chi tiết</a>
                             </td>
                         </tr>`
@@ -612,5 +707,40 @@ function GetOrder() {
         }
     })
 }
+function cancelOrder() {
+    let idOrder = $('#order-id-inp').val();
+    var dataToSend = JSON.stringify({ orderID: idOrder });
+    console.log(idOrder)
+    $.ajax({
+        url: '/admin/order/cancelorder/' + idOrder,
+        type: 'Post',
+        //contentType: 'application/json',
+        //data: JSON.stringify(idOrder),
+        success: function (result) {
+            if (result == 1) {
+                $('#modal-oder-details').modal('hide');
+                GetOrder();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Oops...',
+                    text: `Thành công`,
+                    showConfirmButton: false,
+                    timer: 1000
+                });
+                //$("#borderedTab").find(".active").click();
 
-
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: `Thất bại`,
+                    showConfirmButton: false,
+                    timer: 1000
+                })
+            }
+        },
+        error: function (err) {
+            console.log(err)
+        }
+    });
+}

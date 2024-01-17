@@ -296,6 +296,16 @@ namespace BeautyPoly.View.Controllers
                     customer.Email = checkOut.Email;
                     customer.Password = MaHoaMD5.EncryptPassword("1");
                     await customersRepo.InsertAsync(customer);
+                    var vouchers = await voucherRepo.GetAllAsync();
+                    foreach (var item in vouchers)
+                    {
+                        var voucherDetail = new VoucherDetails()
+                        {
+                            VoucherID = item.VoucherID,
+                            PotentialCustomerID = customer.PotentialCustomerID
+                        };
+                        await voucherDetailsRepo.InsertAsync(voucherDetail);
+                    }
                 }
                 double totalPrice = (double)HttpContext.Session.GetInt32("shiptotal");
                 Order order = new Order();

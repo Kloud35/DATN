@@ -188,13 +188,14 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
             var order = await orderRepo.GetByIdAsync(orderID);
             if (order != null)
             {
-                var orderDetail = await detailOrderRepo.FindAsync(x => x.OrderID == orderID);
-                foreach (var itemDetail in orderDetail)
-                {
-                    await detailOrderRepo.DeleteAsync(itemDetail);
-                }
+               
                 try
                 {
+                    var orderDetail = await detailOrderRepo.FindAsync(x => x.OrderID == orderID);
+                    foreach (var itemDetail in orderDetail)
+                    {
+                        await detailOrderRepo.DeleteAsync(itemDetail);
+                    }
                     await orderRepo.DeleteAsync(order);
 
                 }
@@ -319,6 +320,41 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
                 return Json(1);
             }
             return Json(0);
+        }
+        [HttpPost("admin/order/cancelorder/{orderID}")]
+        public async Task<IActionResult> CancelOrder(int orderID)
+        {
+            var order = await orderRepo.GetByIdAsync(orderID);
+            if (order != null)
+            {
+               
+                try
+                {
+                    var orderDetail = await detailOrderRepo.FindAsync(x => x.OrderID == orderID);
+                    if (order.TransactStatusID != 1)
+                    {
+                        foreach (var itemDetail in orderDetail)
+                        {
+                            var productSku = await productSkuRepo.GetByIdAsync(itemDetail.ProductSkusID);
+                            productSku.Quantity += itemDetail.Quantity;
+                            await productSkuRepo.UpdateAsync(productSku);
+                        }
+                    }
+
+                    order.TransactStatusID = 4;
+                    await orderRepo.UpdateAsync(order);
+
+                }
+                catch (Exception ex)
+                {
+
+                }
+                return Json(1);
+            }
+            else
+            {
+                return Json(2);
+            }
         }
     }
 }

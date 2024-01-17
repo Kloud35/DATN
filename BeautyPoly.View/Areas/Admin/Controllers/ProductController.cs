@@ -163,8 +163,6 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
                         int stt = TextUtils.ToInt(checkProductSkuExist.FirstOrDefault().Sku.Split('_')[1]) + 1;
                         foreach (var s in productDTO.ListSku)
                         {
-
-
                             string[] stringID = s.OptionValueID.Split('-');
                             string sku = product.ProductCode + "_" + stt;
                             ProductSkus productSkus = new ProductSkus();
@@ -212,6 +210,7 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
                         string[] stringID = s.OptionValueID.Split('-');
                         string variantCode = product.ProductCode + "_" + stt;
                         string sku = product.ProductCode;
+                        string productVariantName = product.ProductName;
                         for (int i = 0; i < stringID.Length; i++)
                         {
                             var resultValue = await optionValueRepo.GetByIdAsync(TextUtils.ToInt(stringID[i].Trim()));
@@ -220,6 +219,7 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
                                 var resultOption = await optionRepo.GetByIdAsync((int)resultValue.OptionID);
                                 sku += TextUtils.ToString(resultOption.OptionName[0]).ToUpper();
                                 var values = resultValue.OptionValueName.Trim().Split(' ');
+                                productVariantName += " - " + resultValue.OptionValueName;
                                 foreach (var value in values)
                                 {
                                     sku += TextUtils.ToString(value[0]).ToUpper();
@@ -229,6 +229,7 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
                         ProductSkus productSkus = new ProductSkus();
                         productSkus.ProductID = product.ProductID;
                         productSkus.Sku = sku;
+                        productSkus.ProductVariantName = productVariantName;
                         productSkus.ProductVariantCode = variantCode;
                         productSkus.CapitalPrice = s.CapitalPrice;
                         productSkus.Price = s.Price;
@@ -260,10 +261,16 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
 
         }
         [HttpGet("admin/product/get-product-by-id")]
-        public IActionResult GetProductById(int ID)
+        public async Task<IActionResult> GetProductById(int ID)
         {
             var obj = SQLHelper<ProductDetailsViewModelCustomer>.ProcedureToModel("spGetProductByID", new string[] { "@ID" }, new object[] { ID });
-            return Json(obj, new JsonSerializerOptions());
+            var listSku = await productSkuRepo.FindAsync(p => p.ProductID == ID);
+            var option = await optionDetailRepo.FindAsync(p => p.ProductID == ID);
+
+            var productDetails = SQLHelper<ProductDetails>.ProcedureToList("spGetProductDetailByProductID", new string[] { "@ProductID" }, new object[] { ID });
+
+            Tuple<ProductDetailsViewModelCustomer, List<ProductSkus>, List<OptionDetails>, List<ProductDetails>> tuple = new Tuple<ProductDetailsViewModelCustomer, List<ProductSkus>, List<OptionDetails>, List<ProductDetails>>(obj, listSku.ToList(), option.ToList(), productDetails);
+            return Json(tuple, new JsonSerializerOptions());
         }
         //[HttpGet("admin/product/get-product-image")]
         //public async Task<IActionResult> GetProductImages(int productID)
@@ -275,103 +282,52 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
         public async Task<IActionResult> UpdateProductSku([FromBody] ProductSkuEditDTO productSkuDTO)
         {
 
-            var optionDetails = await optionDetailRepo.FindAsync(p => p.ProductID == productSkuDTO.ProductID);
-            if (optionDetails.Count() > productSkuDTO.ListOptionID.Count())
-            {
-                var product = await productRepo.GetByIdAsync(productSkuDTO.ProductID);
+            var checkExist = SQLHelper<ProductSkus>.ProcedureToModel("spCheckExistsProductDetails",
+                     new string[] { "@ProductID", "@OptionValueID", "@ProductSkuID" },
+                     new object[] { productSkuDTO.ProductID, productSkuDTO.OptionValueID.Replace('-', ',').Trim(), productSkuDTO.ID });
 
+            if (checkExist.ProductSkusID > 0)
+            {
+                return Json("Đã tồn tại Sản phảm  với giá trị thuộc tính tương ứng! Vui lòng chọn lại.");
             }
-            else if (optionDetails.Count() < productSkuDTO.ListOptionID.Count())
+            var product = await productRepo.GetByIdAsync(productSkuDTO.ID);
+            string[] stringID = productSkuDTO.OptionValueID.Split('-');
+            for (int i = 0; i < stringID.Length; i++)
             {
-                var product = await productRepo.GetByIdAsync(productSkuDTO.ProductID);
-                List<int> defferentID = productSkuDTO.ListOptionID.Where(id => !optionDetails.Any(opt => opt.OptionID == id)).ToList();
-
-                if (productSkuDTO.ListOptionID.Count() - defferentID.Count() == optionDetails.Count())
+                var resultValue = await optionValueRepo.GetByIdAsync(TextUtils.ToInt(stringID[i].Trim()));
+                if (resultValue != null)
                 {
-                    for (int i = 0; i < defferentID.Count(); i++)
-                    {
-                        OptionDetails optionD = new OptionDetails();
-                        optionD.OptionID = defferentID[i];
-                        optionD.ProductID = product.ProductID;
-                        await optionDetailRepo.InsertAsync(optionD);
-                    }
-
-                    string[] stringID = productSkuDTO.OptionValueID.Split('-');
-
-                    ProductSkus productSkus = await productSkuRepo.GetByIdAsync(productSkuDTO.ID);
-                    productSkus.CapitalPrice = productSkuDTO.CapitalPrice;
-                    productSkus.Price = productSkuDTO.Price;
-                    productSkus.Quantity = productSkuDTO.Quantity;
-                    await productSkuRepo.UpdateAsync(productSkus);
-                    //await productDetailRepo.DeleteRangeAsync(SQLHelper<ProductDetails>.ProcedureToList("spGetProductDetailByProductID", new string[] { "@ProductID" }, new object[] { product.ProductID }));
-                    await productDetailRepo.DeleteRangeAsync(await productDetailRepo.FindAsync(p => p.ProductSkusID == productSkus.ProductSkusID));
-                    for (int i = 0; i < stringID.Length; i++)
-                    {
-                        var resultValue = await optionValueRepo.GetByIdAsync(TextUtils.ToInt(stringID[i].Trim()));
-                        if (resultValue != null)
-                        {
-                            var resultOptionDetail = optionDetailRepo.FindAsync(p => p.ProductID == product.ProductID && p.OptionID == resultValue.OptionID).Result.FirstOrDefault();
-                            var listSku = await productSkuRepo.FindAsync(p => p.ProductID == product.ProductID);
-                            foreach (var s in listSku)
-                            {
-                                var checkDetail = await productDetailRepo.FindAsync(p => p.ProductSkusID == s.ProductSkusID && p.OptionDetailsID == resultOptionDetail.OptionDetailsID);
-                                if (checkDetail.Count() > 0) continue;
-                                ProductDetails productDetails = new ProductDetails();
-                                productDetails.OptionValueID = resultValue.OptionValueID;
-                                productDetails.OptionDetailsID = resultOptionDetail.OptionDetailsID;
-                                productDetails.ProductSkusID = s.ProductSkusID;
-                                await productDetailRepo.InsertAsync(productDetails);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-
+                    //var resultOption = await optionRepo.GetByIdAsync((int)resultValue.OptionID);
+                    //sku += TextUtils.ToString(resultOption.OptionName[0]).ToUpper();
+                    //var values = resultValue.OptionValueName.Trim().Split(' ');
+                    //productVariantName += " - " + resultValue.OptionValueName;
+                    //foreach (var value in values)
+                    //{
+                    //    sku += TextUtils.ToString(value[0]).ToUpper();
+                    //}
                 }
             }
-            else
+            ProductSkus productSkus = await productSkuRepo.GetByIdAsync(productSkuDTO.ID);
+            productSkus.CapitalPrice = productSkuDTO.CapitalPrice;
+            productSkus.Price = productSkuDTO.Price;
+            productSkus.Quantity = productSkuDTO.Quantity;
+            productSkus.Image = Utilities.ConvertAndSaveImage(productSkuDTO.Image, productSkus.Image ?? productSkus.Sku+".png");
+            await productSkuRepo.UpdateAsync(productSkus);
+            await productDetailRepo.DeleteRangeAsync(await productDetailRepo.FindAsync(p => p.ProductSkusID == productSkus.ProductSkusID));
+            for (int i = 0; i < stringID.Length; i++)
             {
-                bool checkSameValue = productSkuDTO.ListOptionID.All(optionID => optionDetails.Any(p => p.OptionID == optionID));
-                if (checkSameValue)
+                var resultValue = await optionValueRepo.GetByIdAsync(TextUtils.ToInt(stringID[i].Trim()));
+                if (resultValue != null)
                 {
-                    var checkExist = SQLHelper<ProductSkus>.ProcedureToModel("spCheckExistsProductDetails",
-                             new string[] { "@ProductID", "@OptionValueID", "@ProductSkuID" },
-                             new object[] { productSkuDTO.ProductID, productSkuDTO.OptionValueID.Replace('-', ',').Trim(), productSkuDTO.ID });
-
-                    if (checkExist.ProductSkusID > 0)
-                    {
-                        return Json("Đã tồn tại Sản phảm chi tiết với giá trị thuộc tính tương ứng! Vui lòng chọn lại.");
-                    }
-                    var product = await productRepo.GetByIdAsync(productSkuDTO.ProductID);
-
-                    string[] stringID = productSkuDTO.OptionValueID.Split('-');
-
-                    ProductSkus productSkus = await productSkuRepo.GetByIdAsync(productSkuDTO.ID);
-                    productSkus.CapitalPrice = productSkuDTO.CapitalPrice;
-                    productSkus.Price = productSkuDTO.Price;
-                    productSkus.Quantity = productSkuDTO.Quantity;
-                    await productSkuRepo.UpdateAsync(productSkus);
-                    await productDetailRepo.DeleteRangeAsync(await productDetailRepo.FindAsync(p => p.ProductSkusID == productSkus.ProductSkusID));
-                    for (int i = 0; i < stringID.Length; i++)
-                    {
-                        var resultValue = await optionValueRepo.GetByIdAsync(TextUtils.ToInt(stringID[i].Trim()));
-                        if (resultValue != null)
-                        {
-                            ProductDetails productDetails = new ProductDetails();
-                            productDetails.OptionValueID = resultValue.OptionValueID;
-                            var resultOptionDetail = optionDetailRepo.FindAsync(p => p.ProductID == product.ProductID && p.OptionID == resultValue.OptionID).Result.FirstOrDefault();
-                            productDetails.OptionDetailsID = resultOptionDetail.OptionDetailsID;
-                            productDetails.ProductSkusID = productSkus.ProductSkusID;
-                            await productDetailRepo.InsertAsync(productDetails);
-                        }
-                    }
-                }
-                else
-                {
-
+                    ProductDetails productDetails = new ProductDetails();
+                    productDetails.OptionValueID = resultValue.OptionValueID;
+                    var resultOptionDetail = optionDetailRepo.FindAsync(p => p.ProductID == productSkus.ProductID && p.OptionID == resultValue.OptionID).Result.FirstOrDefault();
+                    productDetails.OptionDetailsID = resultOptionDetail.OptionDetailsID;
+                    productDetails.ProductSkusID = productSkus.ProductSkusID;
+                    await productDetailRepo.InsertAsync(productDetails);
                 }
             }
+
             return Json(1);
         }
 
@@ -433,7 +389,9 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
         [HttpGet("admin/product/get-product-sku-by-id")]
         public async Task<IActionResult> GetProductSkuByID(int productSkuID)
         {
-            return Json(await productSkuRepo.GetByIdAsync(productSkuID), new JsonSerializerOptions());
+            List<ProductSkusViewModel> list = SQLHelper<ProductSkusViewModel>.ProcedureToList("spGetProductSku", new string[] { }, new object[] { });
+
+            return Json(list.FirstOrDefault(p => p.ProductSkusID == productSkuID), new JsonSerializerOptions());
         }
 
         [HttpGet("admin/product/get-product-detail")]

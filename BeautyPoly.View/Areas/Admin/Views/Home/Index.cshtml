@@ -3,34 +3,13 @@
     Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
 }
 
-<h1>DashBoard</h1>
 <section class="section dashboard">
 
     <div class="card">
         <div class="card-header p-2">
-            <h3 class="mt-2 fw-bold text-dark">KẾT QUẢ KINH DOANH</h3>
+            <h3 class="mt-2 fw-bold text-dark">KẾT QUẢ KINH DOANH TRONG NGÀY</h3>
         </div>
         <div class="card-body">
-            <form action="javascript:GetAllOrder();" method="post" class="card-header-form">
-                <div class="row m-0">
-                    <div class="col-12 col-md-3 p-1">
-                        <div class="form-floating form-floating-outline">
-                            <input type="date" id="datestart_reports" class="form-control" placeholder="" value="@DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd")" />
-                            <label for="datestart_reports">Từ ngày</label>
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-3 p-1">
-                        <div class="input-group input-group-merge">
-                            <div class="form-floating form-floating-outline">
-                                <input type="date" id="dateend_reports" class="form-control" placeholder="" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-                                <label for="dateend_reports">Đến ngày</label>
-                            </div>
-                            <button class="btn btn-primary"><i class="mdi mdi-magnify"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </form>
             <div class="row mt-2">
                 <div class="col-md-3 col-12">
                     <div class="card info-card sales-card">
@@ -110,7 +89,7 @@
 
 
 
-    <div class="card m-2">
+    <div class="card">
         <div class="card-header border-bottom bg-white">
             <div class="row">
                 <div class="col-12 col-md-9">

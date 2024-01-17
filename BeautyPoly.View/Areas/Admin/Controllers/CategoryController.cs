@@ -1,4 +1,5 @@
-﻿using BeautyPoly.Data.Repositories;
+﻿using BeautyPoly.Data.Models;
+using BeautyPoly.Data.Repositories;
 using BeautyPoly.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -74,6 +75,25 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
         //    }
         //    return Json(1);
         //}
+        [HttpGet]
+        public async Task<IActionResult> CreateCate([FromBody] Categories categories)
+        {
+            Categories cate = new Categories();
+            if (categories.CateID > 0)
+            {
+                cate = categories;
+                await categoryRepo.UpdateAsync(cate);
+            }
+            else
+            {
+                
+                cate = categories;
+                await categoryRepo.InsertAsync(cate);
+            }
+            return Json(1);
+        }
+
+
         [HttpPost("admin/cate/delete")]
         public async Task<IActionResult> Delete([FromBody] List<int> listCateID)
         {

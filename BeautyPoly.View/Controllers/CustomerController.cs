@@ -43,5 +43,6 @@ namespace BeautyPoly.View.Controllers
             var orderDetail = SQLHelper<OrderDetailViewModel>.ProcedureToList("spGetOrderDetailCustomer", new string[] { "@OrderID" }, new object[] { orderID });
             return Json(orderDetail, new JsonSerializerOptions());
         }
+
     }
 }

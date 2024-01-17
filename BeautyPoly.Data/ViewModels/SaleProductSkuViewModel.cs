@@ -13,6 +13,7 @@ namespace BeautyPoly.Data.ViewModels
         public string SaleName { get; set; }
         public int SaleType { get; set; }
         public int DiscountValue { get; set; }
+        public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsSelect { get; set; }
         public double Price { get; set; }

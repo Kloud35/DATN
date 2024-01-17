@@ -19,9 +19,8 @@ function updateCountdown(endDate) {
     var nowDate = new Date();
     endDate = new Date(endDate);
     var timeRemaining = endDate - nowDate;
-
     if (timeRemaining <= 0) {
-        countdowntext = 'Khuyến mãi đã kết thúc';
+        countdowntext = 'Chương trình đã kết thúc';
         return countdowntext;
     } else {
         var days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
@@ -47,11 +46,16 @@ function GetAll() {
             var countdowntext = '';
             $.each(result, function (key, item) {
                 //var saleType = item.saleType == 0 ? "Giảm theo phần trăm" : "Giảm trực tiếp"
+                var nowDate = new Date();
                 var startDate = new Date(item.startDate);
                 var endDate = new Date(item.endDate);
+                var timeRemainingStart = nowDate - startDate;
                 var discountValue = item.saleType === 0 ? `${item.discountValue} %` : `${item.discountValue.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}`;
                 enddate = item.endDate;
                 countdowntext = updateCountdown(enddate);
+                if (timeRemainingStart <= 0) {
+                    countdowntext = 'Chương trình chưa bắt đầu';
+                }
                 if (item.isDelete == false) {
                     html += `<tr>
                            <td>
@@ -173,33 +177,45 @@ function OnSaleOfProductSku(id) {
         contentType: 'application/json;charset=utf-8',
         data: { productSkuID: id },
         success: function (result) {
-            var html = `<tr class="table-secondary">
-                   <td>Không áp dụng chương trình nào</td>
-                   <td>0</td>
-                   <td>0</td>
-                   <td>0</td>
-                   <td>
-                       <div class="form-check form-switch d-flex justify-content-center">
-                         <input class="form-check-input" type="radio" role="switch" name="sale" value="0" checked>  
-                       </div>
-                   </td>
-                   <td>
-                   </td>
-                </tr>`
+            //var html = `<tr class="table-secondary">
+            //       <td>Không áp dụng chương trình nào</td>
+            //       <td>0</td>
+            //       <td>0</td>
+            //       <td>0</td>
+            //       <td>
+            //           <div class="form-check form-switch d-flex justify-content-center">
+            //             <input class="form-check-input" type="radio" role="switch" name="sale" value="0" checked>
+            //           </div>
+            //       </td>
+            //       <td>
+            //       </td>
+            //    </tr>`
+            var html = '';
             $.each(result, (key, item) => {
                 var value = item.saleType == 0 ? `${item.discountValue}%` : formatCurrency(parseInt(item.discountValue));
                 var salePrice = item.saleType == 0 ? formatCurrency(parseInt(item.price - item.price * item.discountValue / 100)) : formatCurrency(parseInt(item.price - item.discountValue));
                 var disabled = '';
                 var note = '';
+                var row = '';
                 var checked = item.isSelect ? 'checked' : '';
                 var nowDate = new Date();
                 var endDate = new Date(item.endDate);
-                var timeRemaining = endDate - nowDate;
-                if (timeRemaining <= 0) {
+                var startDate = new Date(item.startDate);
+                var timeRemainingEnd = endDate - nowDate;
+                var timeRemainingStart = nowDate - startDate;
+                if (timeRemainingEnd <= 0) {
                     disabled = 'disabled';
                     salePrice = 0;
                     note = `<span class="text-danger">Chương trình đã kết thúc</span>`;
                     checked = '';
+                    row = 'table-secondary'
+                }
+                else if (timeRemainingStart <= 0) {
+                    disabled = 'disabled';
+                    salePrice = 0;
+                    note = `<span class="text-danger">Chương trình chưa bắt đầu</span>`;
+                    checked = '';
+                    row = 'table-secondary'
                 } else {
                     note = `Áp dụng chương trình giảm <span class="text-danger">${value}</span>`;
                     if (item.saleType == 1) {
@@ -208,10 +224,11 @@ function OnSaleOfProductSku(id) {
                             salePrice = 0;
                             note = `Giá không phù hợp với giá trị giảm <span class="text-danger">${value}</span>`;
                             checked = '';
+                            row = 'table-secondary'
                         }
                     }
                 }
-                html += `<tr>
+                html += `<tr class="${row}">
                             <td>${item.saleName}</td>
                             <td>${formatCurrency(parseInt(item.price))}</td>
                             <td>${salePrice}</td>
@@ -232,7 +249,7 @@ function OnSaleOfProductSku(id) {
             $('#list_sale').html(html);
         }
     });
-    $('#modal_sale_productsku').modal('show');  
+    $('#modal_sale_productsku').modal('show');
 }
 function deleteSaleItem(saleID) {
     var productSkuID = parseInt($('#productsku_id').val());

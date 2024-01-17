@@ -25,8 +25,8 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
         [Route("admin/sale")]
         public IActionResult Index()
         {
-            //if (HttpContext.Session.GetInt32("AccountID") == null)
-            //    return RedirectToRoute("Login");
+            if (HttpContext.Session.GetInt32("AccountID") == null)
+                return RedirectToRoute("Login");
             return View();
         }
 
@@ -57,7 +57,7 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
         [HttpPost("admin/saleitems/update")]
         public async Task<IActionResult> UpdateSaleItems(int productSkuID, int saleIDSelect)
         {
-            var saleItems = saleItemsRepo.GetAllAsync().Result.Where(p => p.ProductSkusID == productSkuID);
+            var saleItems = await saleItemsRepo.FindAsync(p => p.ProductSkusID == productSkuID);
             foreach (var item in saleItems)
             {
                 item.IsSelect = false;
@@ -68,43 +68,35 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
             {
                 saleItem.IsSelect = true;
                 await saleItemsRepo.UpdateAsync(saleItem);
-            }                   
+            }
             return Json(1);
         }
         [HttpPost("admin/saleitems/timelive")]
         public async Task<IActionResult> UpLoadTimeLive()
-        {            
+        {
             var sales = await saleRepo.GetAllAsync();
-            foreach (var item1 in sales)
+            foreach (var sale in sales)
             {
-                var saleItems = saleItemsRepo.GetAllAsync().Result.Where(p => p.SaleID == item1.SaleID);
-                if (item1.EndDate <= DateTime.Now)
+                var saleItems = await saleItemsRepo.FindAsync(p => p.SaleID == sale.SaleID);
+                if (sale.EndDate <= DateTime.Now || sale.StartDate > DateTime.Now)
                 {
-                    foreach (var item2 in saleItems)
+                    foreach (var saleItem in saleItems)
                     {
-                        item2.IsSelect = false;
-                        await saleItemsRepo.UpdateAsync(item2);
+                        saleItem.IsSelect = false;
+                        await saleItemsRepo.UpdateAsync(saleItem);
                     }
-                }
-                if (item1.StartDate >= DateTime.Now)
-                {
-                    foreach (var item2 in saleItems)
-                    {
-                        item2.IsSelect = true;
-                        var productSku = await productSkusRepo.GetByIdAsync((int)item2.ProductSkusID);
-                        var sale = await saleRepo.GetByIdAsync((int)item2.SaleID);
-                        if (sale.SaleType == 1)
-                        {
-                            if((Convert.ToInt32(productSku.Price) - sale.DiscountValue) <= 0)
-                            {
-                                item2.IsSelect = false;
-                            }
-                        }
-                        await saleItemsRepo.UpdateAsync(item2);
-                    }
+
                 }
             }
-            
+            var list = SQLHelper<SaleItems>.ProcedureToList("spGetProductSkuBySale", new string[] { }, new object[] { });
+            foreach (var item in list)
+            {
+                var saleItem = await saleItemsRepo.FirstOrDefaultAsync(p => p.SaleItemsID == item.SaleItemsID);
+                saleItem.IsSelect = true;
+                var saleItemBySkus = await saleItemsRepo.FirstOrDefaultAsync(p => p.ProductSkusID == item.ProductSkusID && p.IsSelect == true);
+                if (saleItemBySkus != null) saleItem.IsSelect = false;
+                await saleItemsRepo.UpdateAsync(saleItem);
+            }
             return Json(1);
         }
         [HttpDelete("admin/saleitems/delete")]
@@ -170,8 +162,6 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
             {
                 sale.SaleID = saleDTO.Sale.SaleID;
                 await saleRepo.UpdateAsync(sale);
-                var saleItems = saleItemsRepo.GetAllAsync().Result.Where(p => p.SaleID == saleDTO.Sale.SaleID);
-                await saleItemsRepo.DeleteRangeAsync(saleItems);
             }
             else
             {
@@ -181,19 +171,17 @@ namespace BeautyPoly.View.Areas.Admin.Controllers
             }
             foreach (var item in saleDTO.arrSaleItems)
             {
-                var saleItems = new SaleItems()
+                var exsit = await saleItemsRepo.FirstOrDefaultAsync(p => p.ProductSkusID == item.ProductSkusID && p.SaleID == sale.SaleID);
+                if (exsit == null)
                 {
-                    SaleID = sale.SaleID,
-                    ProductSkusID = item.ProductSkusID,
-                    IsSelect = true,
-                };
-                var check = saleItemsRepo.GetAllAsync().Result.Where(p=>p.ProductSkusID == item.ProductSkusID && p.SaleID != sale.SaleID);
-                foreach (var item2 in check)
-                {
-                    item2.IsSelect = false;
-                    await saleItemsRepo.UpdateAsync(item2);
+                    var saleItems = new SaleItems()
+                    {
+                        SaleID = sale.SaleID,
+                        ProductSkusID = item.ProductSkusID,
+                        IsSelect = false,
+                    };
+                    await saleItemsRepo.InsertAsync(saleItems);
                 }
-                await saleItemsRepo.InsertAsync(saleItems);
             }
             return Json(1);
         }

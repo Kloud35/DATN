@@ -16,6 +16,9 @@
         public bool? IsDelete { get; set; }
         public int CountOption { get; set; }
         public string? ProductSkuName { get; set; }
+        public string? ProductVariantName { get; set; }
+        public string? ProductVariantCode { get; set; }
+        public string? CombinedOptionValues { get; set; }
         public int QuantityCart { get; set; }
         public double TotalPrice { get; set; }
         public double TotalPriceSale { get; set; }

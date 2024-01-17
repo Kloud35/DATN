@@ -116,10 +116,64 @@ namespace BeautyPoly.Areas.Admin.Controllers
             return View();
         }
         [HttpGet("admin/home/GetProductToDashboard")]
-        public IActionResult GetProductToDashboard(DateTime dateStart, DateTime dateEnd)
+        public IActionResult GetProductToDashboard(int flag)
         {
+            DateTime dateStart = DateTime.Today;
+            DateTime dateEnd = DateTime.Today.AddHours(23).AddMinutes(59).AddSeconds(59);
+            if (flag == 1)
+            {
+                dateStart = dateStart.AddDays(-1);
+                dateEnd = dateEnd.AddDays(-1);
+            }
+            else if (flag == 2)
+            {
+                dateStart = dateStart.AddDays(-7);
+            }
+            else if (flag == 3)
+            {
+                dateStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+            }
+            else if (flag == 4)
+            {
+                dateStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0).AddMonths(-1);
+                dateEnd = dateStart.AddDays(DateTime.DaysInMonth(dateStart.Year, dateStart.Month) - 1).AddHours(23).AddMinutes(59).AddSeconds(59); ;
+            }
             var list = SQLHelper<ProductViewDashboard>.ProcedureToList("spGetProductThongKe", new string[] { "@DateStart", "@DateEnd" }, new object[] { dateStart, dateEnd });
             return Json(list, new JsonSerializerOptions());
         }
+        [HttpGet("admin/home/GetRevenueChart")]
+        public IActionResult GetRevenueChart(int flag)
+        {
+            DateTime dateStart = DateTime.Today;
+            DateTime dateEnd = DateTime.Today.AddHours(23).AddMinutes(59).AddSeconds(59);
+            if (flag == 1)
+            {
+                dateStart = dateStart.AddDays(-1);
+                dateEnd = dateEnd.AddDays(-1);
+            }
+            else if (flag == 2)
+            {
+                dateStart = dateStart.AddDays(-7);
+            }
+            else if (flag == 3)
+            {
+                dateStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+            }
+            else if (flag == 4)
+            {
+                dateStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0).AddMonths(-1);
+                dateEnd = dateStart.AddDays(DateTime.DaysInMonth(dateStart.Year, dateStart.Month) - 1).AddHours(23).AddMinutes(59).AddSeconds(59); ;
+            }
+            var list = SQLHelper<ProductViewDashboard>.ProcedureToList("spGetProductInMonth", new string[] { "@DateStart", "@DateEnd" }, new object[] { dateStart, dateEnd });
+            return Json(list, new JsonSerializerOptions());
+        }
+        [HttpGet("admin/home/GetDataInDay")]
+        public IActionResult GetDataInDay()
+        {
+
+            var model = SQLHelper<ProductViewDashboard>.ProcedureToModel("spGetDataInDay", null, null);
+            return Json(model, new JsonSerializerOptions());
+        }
+
     }
 }
