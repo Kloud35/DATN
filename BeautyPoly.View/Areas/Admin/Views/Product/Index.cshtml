@@ -114,8 +114,8 @@
                     </div>
                     <div class="col-12 col-md-6">
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="quantity_product" placeholder="Số lượng">
-                            <label for="quantity_product">Số lượng@* <span class="text-danger">(*)</span> *@</label>
+                            <input type="text" class="form-control" id="capital_price_product" placeholder="Giá nhập" oninput="formatNumberInput(this)" onchange="onChangeCapitalPrice(this)">
+                            <label for="capital_price_product">Giá nhập@* <span class="text-danger">(*)</span> *@</label>
                         </div>
                     </div>
                     <div class="col-12 col-md-6">
@@ -125,23 +125,24 @@
                         </div>
                     </div>
 
+                    
                     <div class="col-12 col-md-6">
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="capital_price_product" placeholder="Giá nhập">
-                            <label for="capital_price_product">Giá nhập@* <span class="text-danger">(*)</span> *@</label>
+                            <input type="text" class="form-control" id="price_product" placeholder="Giá bán" oninput="formatNumberInput(this)" onchange="onChangePrice(this)">
+                            <label for="price_product">Giá bán@* <span class="text-danger">(*)</span> *@</label>
                         </div>
                     </div>
-
                     <div class="col-12 col-md-6">
                         <label for="cate_product">Danh mục<span class="text-danger">(*)</span></label>
                         <select class="form-select form-control " id="cate_product" aria-label="Danh mục" style="width: 100%">
                             <option value="0" disabled selected>--Chọn danh mục--</option>
                         </select>
                     </div>
+                   
                     <div class="col-12 col-md-6">
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="price_product" placeholder="Giá bán">
-                            <label for="price_product">Giá bán@* <span class="text-danger">(*)</span> *@</label>
+                            <input type="text" class="form-control" id="quantity_product" placeholder="Số lượng" oninput="formatNumberInput(this)" onchange="onChangeQuantity(this)">
+                            <label for="quantity_product">Số lượng@* <span class="text-danger">(*)</span> *@</label>
                         </div>
                     </div>
                 </div>
@@ -209,13 +210,13 @@
                                                     Tên
                                                 </th>
                                                 <th class="w-auto">
-                                                    Giá vốn
+                                                    Giá nhập
                                                 </th>
                                                 <th class="w-auto">
                                                     Giá bán
                                                 </th>
                                                 <th class="w-auto">
-                                                    Tồn kho
+                                                    Số lượng
                                                 </th>
                                             </tr>
                                         </thead>
@@ -299,13 +300,13 @@
                                                     Tên
                                                 </th>
                                                 <th class="w-auto">
-                                                    Giá vốn
+                                                    Giá nhập
                                                 </th>
                                                 <th class="w-auto">
                                                     Giá bán
                                                 </th>
                                                 <th class="w-auto">
-                                                    Tồn kho
+                                                    Số lượng
                                                 </th>
                                             </tr>
                                         </thead>
@@ -360,15 +361,15 @@
                             </div>
                             <div class="col-12 col-md-4">
                                 <label for="capital_price_product_sku_edit">Giá nhập</label>
-                                <input type="number" class="form-control" id="capital_price_product_sku_edit" />
+                                <input type="text" class="form-control text-end" id="capital_price_product_sku_edit" oninput="formatNumberInput(this)" />
                             </div>
                             <div class="col-12 col-md-4">
                                 <label for="price_product_sku_edit">Giá bán</label>
-                                <input type="number" class="form-control" id="price_product_sku_edit" />
+                                <input type="text" class="form-control text-end" id="price_product_sku_edit" oninput="formatNumberInput(this)" />
                             </div>
                             <div class="col-12 col-md-4">
                                 <label for="product_name_view_product_sku">Số lượng</label>
-                                <input type="number" class="form-control" id="quantity_product_sku_edit" />
+                                <input type="text" class="form-control text-end" id="quantity_product_sku_edit" oninput="formatNumberInput(this)" />
                             </div>
                         </div>
                     </div>
@@ -386,7 +387,6 @@
                             <div class="accordion-body">
                                 <div id="option_value_product_edit">
                                 </div>
-                               
                             </div>
                         </div>
                     </div>
@@ -400,6 +400,12 @@
         </div>
     </div>
 </div>
+
+
+
+
+
+
 <!--Modal Product Image-->
 <div id="modal_product_image" class="modal fade" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable modal-xl">

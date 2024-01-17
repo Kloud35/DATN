@@ -358,7 +358,6 @@ function addOptionEdit() {
                     </div>
                       <div class="col-12 col-md-4">
                         <div class="d-flex justify-content-end">
-                            <button class="btn text-danger" id="delete_${index}" onclick="deleteRow(this)"><i class="bi bi-trash"></i></button>
                         </div>
                     </div>
                 </div>`
@@ -846,9 +845,9 @@ function optionValueChange() {
                         </a>
                     </td>
                     <td>${item.text}</td>
-                    <td><input type="number" id="capital_price_sku_${indexRow}" class="text-end form-control" value="0" /></td>
-                    <td><input type="number" id="price_sku_${indexRow}" class="text-end form-control" value="0" /></td>
-                    <td><input type="number" id="quantity_sku_${indexRow}" class="text-end form-control" value="0" /></td>
+                    <td><input type="text" id="capital_price_sku_${indexRow}" class="text-end form-control" value="0" oninput="formatNumberInput(this)"/></td>
+                    <td><input type="text" id="price_sku_${indexRow}" class="text-end form-control" value="0" oninput="formatNumberInput(this)" /></td>
+                    <td><input type="text" id="quantity_sku_${indexRow}" class="text-end form-control" value="0" oninput="formatNumberInput(this)" /></td>
                     <td><input type="text" id="option_value_sku_${indexRow}" class="text-end form-control" value="${item.value}" hidden /></td>
                     <td><input type="text" id="produc_detail_id_${indexRow}" class="text-end form-control" value="" hidden /></td>
                 </tr>`
@@ -973,9 +972,9 @@ function saveProduct() {
     $('tr[id*="row_option_value_product_"]').each(function () {
         var id = $(this).attr('id');
         var numberId = id.substring(id.lastIndexOf('_') + 1);
-        var capitalPrice = parseFloat($(`#capital_price_sku_${numberId}`).val());
-        var price = parseFloat($(`#price_sku_${numberId}`).val());
-        var quantity = parseInt($(`#quantity_sku_${numberId}`).val());
+        var capitalPrice = parseFloat($(`#capital_price_sku_${numberId}`).val().replace(/[^0-9]/g, ''));
+        var price = parseFloat($(`#price_sku_${numberId}`).val().replace(/[^0-9]/g, ''));
+        var quantity = parseInt($(`#quantity_sku_${numberId}`).val().replace(/[^0-9]/g, ''));
         var optionValueID = $(`#option_value_sku_${numberId}`).val();
         var image = $(`#image_sku_${numberId}`).attr('src');
         //if (capitalPrice == '') {
@@ -1195,9 +1194,9 @@ function saveEdit() {
         listOptionID.push(optionID);
     });
 
-    var capitalPrice = parseFloat($(`#capital_price_product_sku_edit`).val());
-    var price = parseFloat($(`#price_product_sku_edit`).val());
-    var quantity = parseInt($(`#quantity_product_sku_edit`).val());
+    var capitalPrice = parseFloat($(`#capital_price_product_sku_edit`).val().replace(/[^0-9]/g, ''));
+    var price = parseFloat($(`#price_product_sku_edit`).val().replace(/[^0-9]/g, ''));
+    var quantity = parseInt($(`#quantity_product_sku_edit`).val().replace(/[^0-9]/g, ''));
     var optionValueID = $("#option_value_id_product_sku_edit").val();
     var img = $("#image_sku_edit").attr('src');
 
@@ -1415,7 +1414,7 @@ function onShowSku(id, event) {
 
     if (cardElement.length > 0) {
         cardElement.remove();
-        $(event.target).closest('tr').removeClass('table-success');
+        //$(event.target).closest('tr').removeClass('table-success');
     } else {
         $.ajax({
             url: '/admin/product/get-product-sku',
@@ -1452,10 +1451,10 @@ function onShowSku(id, event) {
                 var finalHtml = `<tr class="sku-detail table-success" id="sku_detail_${id}"  style="border-left: 2px solid lightgreen; border-right: 2px solid lightgreen; border-bottom: 2px solid lightgreen;background-color:lightgreen">
                                     <td colspan="7">${skuHtml}</td>
                                 </tr>`;
-                $('.sku-detail').parent().removeClass('table-success');
+                //$('.sku-detail').parent().removeClass('table-success');
                 $('.sku-detail').remove();
               
-                $(event.target).closest('tr').addClass('table-success');
+                //$(event.target).closest('tr').addClass('table-success');
                 $(finalHtml).insertAfter(el);
             },
             error: function (err) {
@@ -1477,17 +1476,94 @@ function addProductSame(id) {
         //contentType: 'application/json;charset=utf-8',
         data: { productID: id },
         success: function (result) {
+            $('#product_sku_id_product_sku').val(0);
+            $('#input_product_id_product_sku_edit').val(result.ProductID);
+            $('#image_sku_edit').attr('src', "");
+          
+            $('#product_variant_code_view_product_sku').val(result.ProductVariantCode);
+            $('#product_name_view_product_sku').val(result.ProductVariantName);
+            $('#capital_price_product_sku_edit').val(result.CapitalPrice);
+            $('#price_product_sku_edit').val(result.Price);
+            $('#quantity_product_sku_edit').val(result.Quantity);
+            $('#image_sku_edit').attr('src', '/images/' + result.Image);
+
+
             $.each(result, (key, item) => {
-                addOption();
+                addOptionEdit();
                 var i = index - 1;
-                $(`#option_product_${i}`).val(item.OptionID).trigger('change');
-                $(`#option_product_${i}`).prop('disabled', true);
-                $(`#option_detail_id_${i}`).val(item.OptionDetailsID);
+                $(`#option_product_edit_${i}`).val(item.OptionID).trigger('change');
+                $(`#option_product_edit_${i}`).prop('disabled', true);
+                $('#modal_product_sku_edit').modal('show');
             });
-            $('#')
         },
         error: function (err) {
             console.log(err)
         }
+    })
+
+   
+}
+
+function formatNumberInput(input) {
+    // Xóa các ký tự không phải số
+    input.value = input.value.replace(/[^0-9]/g, '');
+
+    // Chuyển đổi giá trị thành số
+    let numericValue = parseFloat(input.value);
+
+    // Kiểm tra nếu giá trị là số âm
+    if (isNaN(numericValue) || numericValue < 0) {
+        // Nếu là số âm, đặt giá trị về 0
+        input.value = '0';
+    } else {
+        // Nếu là số dương hoặc không phải số, định dạng giá trị
+        input.value = numericValue.toLocaleString('en-US');
+    }
+}
+
+//function formatNumberInput(input) {
+
+//    if (isNaN(input.value)) {
+//        input.value = input.value.replace(/[^0-9]/g, '');
+//    }
+//    input.value = parseFloat(input.value).toLocaleString('en-US');
+//}
+//function formatNumberInputQuantity(input, index) {
+//    var id = $(`#product_select_${index}`).val();
+//    var product = productList.find(p => p.ProductSkusID == id);
+
+//    if (isNaN(input.value)) {
+//        input.value = input.value.replace(/[^0-9]/g, '');
+//    }
+//    var value = parseFloat(input.value);
+//    if (value > product.Quantity) {
+//        value = product.Quantity;
+//    }
+//    input.value = value.toLocaleString('en-US');
+//}
+
+function onChangeQuantity(input) {
+    $('tr[id*="row_option_value_product_"]').each(function () {
+        var id = $(this).attr('id');
+        var numberId = id.substring(id.lastIndexOf('_') + 1);
+        $(`#quantity_sku_${numberId}`).val(input.value);
+    })
+}
+
+function onChangeCapitalPrice(input) {
+    $('tr[id*="row_option_value_product_"]').each(function () {
+        var id = $(this).attr('id');
+        var numberId = id.substring(id.lastIndexOf('_') + 1);
+        $(`#capital_price_sku_${numberId}`).val(input.value);
+    })
+}
+
+function onChangePrice(input) {
+    $('tr[id*="row_option_value_product_"]').each(function () {
+        var id = $(this).attr('id');
+        var numberId = id.substring(id.lastIndexOf('_') + 1);
+        
+        $(`#price_sku_${numberId}`).val(input.value);
+      
     })
 }
